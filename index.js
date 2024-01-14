@@ -115,6 +115,6 @@ app.get('/api/v1/sb/:canto/:chapter/:verse', async (req, res) => {
     scrapeBhagavatam()
 })
 
-app.listen(3000, () => {
+app.listen(process.env.PORT || 3000, () => {
     console.log("connected to port 3000")
 })
