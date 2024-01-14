@@ -15,7 +15,13 @@ app.get("/api/v1/bg/:chapter/:verse", (req, res) => {
     async function scrapeGita() {
         const baseUrl = `https://vedabase.io/en/library/bg/${req.params.chapter}/${req.params.verse}/`;
 
-        axios.get(baseUrl)
+        axios.get(baseUrl, {
+            headers:{
+                "Accept": "*/*",
+                "set-cookie":"csrftoken=ZYyKJWfR9JDWa4mfYxHwn30Z2ifIaNzK;",
+                "Cookie":"csrftoken=ZYyKJWfR9JDWa4mfYxHwn30Z2ifIaNzK"
+            }
+        })
             .then(response => {
 
                 const $ = cheerio.load(response.data)
@@ -70,7 +76,13 @@ app.get('/api/v1/sb/:canto/:chapter/:verse', async (req, res) => {
     async function scrapeBhagavatam() {
         const baseUrl = `https://vedabase.io/en/library/sb/${req.params.canto}/${req.params.chapter}/${req.params.verse}/`;
 
-        axios.get(baseUrl)
+        axios.get(baseUrl, {
+            headers:{
+                "Accept": "*/*",
+                "set-cookie":"csrftoken=ZYyKJWfR9JDWa4mfYxHwn30Z2ifIaNzK;",
+                "Cookie":"csrftoken=ZYyKJWfR9JDWa4mfYxHwn30Z2ifIaNzK"
+            }
+        })
             .then(response => {
 
                 const $ = cheerio.load(response.data)
