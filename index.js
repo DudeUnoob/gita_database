@@ -53,6 +53,7 @@ app.get("/api/v1/bg/:chapter/:verse", (req, res) => {
                 })
 
             }).catch(error => {
+                console.log(error)
                 return res.status(400).json({
                     errorMessage: "Did not find that bhagavad gita chapter/verse"
                 })
@@ -106,6 +107,7 @@ app.get('/api/v1/sb/:canto/:chapter/:verse', async (req, res) => {
                 })
 
             }).catch(error => {
+                console.log(error)
                 return res.status(400).json({
                     errorMessage: "Did not find that srimad bhagavatm canto/chapter/verse"
                 })
