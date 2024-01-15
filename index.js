@@ -81,7 +81,8 @@ app.get('/api/v1/sb/:canto/:chapter/:verse', async (req, res) => {
             headers:{
                 "Accept": "*/*",
                 "set-cookie":"csrftoken=ZYyKJWfR9JDWa4mfYxHwn30Z2ifIaNzK;",
-                "Cookie":"csrftoken=ZYyKJWfR9JDWa4mfYxHwn30Z2ifIaNzK"
+                "Cookie":"csrftoken=ZYyKJWfR9JDWa4mfYxHwn30Z2ifIaNzK",
+                "User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0"
             }
         })
             .then(response => {
