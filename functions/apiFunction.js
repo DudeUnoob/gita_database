@@ -1,48 +1,49 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
+const BhagavadGitaVerse = require('../model/BhagavadGita');
 
-async function apiFunction(baseUrl, res, library) {
+async function apiFunction(baseUrl, res, library, isJoinedVerse = false, joinedVerseNumbers = []) {
     try {
         const response = await axios.get(baseUrl, {
             headers: {
                 "Accept": "*/*",
-                "set-cookie": "csrftoken=ZYyKJWfR9JDWa4mfYxHwn30Z2ifIaNzK;",
-                "Cookie": "csrftoken=ZYyKJWfR9JDWa4mfYxHwn30Z2ifIaNzK",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
         });
 
         const $ = cheerio.load(response.data);
         const parentContainer = $('#content');
-        let englishSanskritTranslation;
-        const chapterNumber = parseInt(parentContainer.find('h1').text().split('.')[1]);
-        const verseNumber = parseInt(parentContainer.find('h1').text().split('.')[2]);
-        const sanskritText = parentContainer.find('.r-devanagari').html().replace(/<br\s*[/]?>/gi, '\n').replace(/<\/?[^>]+(>|$)/g, '');
-        if(library == "BG"){
-            englishSanskritTranslation = parentContainer.find('.r-verse-text em em').html().replace(/<br\s*[/]?>/gi, '\n').replace(/<\/?[^>]+(>|$)/g, '')
-        } else if(library == "SB") {
-            englishSanskritTranslation = parentContainer.find('.r-verse-text em').html().replace(/<br\s*[/]?>/gi, '\n').replace(/<\/?[^>]+(>|$)/g, '')
-        }
-        const synonyms = parentContainer.find('.r-synonyms p').text().trim();
-        const translation = parentContainer.find('.r-translation strong').text().trim();
-        const purport = parentContainer.find('.r-paragraph p').text().trim();
+        
+        const titleText = parentContainer.find('h1').text();
+        const [_, chapterStr, verseStr] = titleText.split('.');
+        const chapterNumber = parseInt(chapterStr);
+        const verseNumber = parseInt(verseStr.split('-')[0]); // Get first number for joined verses
 
-        return res.status(200).json({
-            library: "BG",
+        const verseData = {
             chapterNumber,
             verseNumber,
-            sanskritText,
-            englishSanskritTranslation,
-            synonyms,
-            translation,
-            Purport: purport
-        });
+            isJoinedVerse,
+            joinedVerseNumbers: isJoinedVerse ? joinedVerseNumbers : [verseNumber],
+            sanskritText: parentContainer.find('.r-devanagari').text().trim() || '',
+            englishSanskritTranslation: parentContainer.find('.r-verse-text').text().trim() || '',
+            synonyms: parentContainer.find('.r-synonyms p').text().trim() || '',
+            translation: parentContainer.find('.r-translation p').text().trim() || '',
+            purport: parentContainer.find('.r-paragraph p')
+                .map((_, el) => $(el).text().trim())
+                .get()
+                .filter(text => text)
+                .join('\n\n')
+        };
+
+        // Save to database
+        const verse = new BhagavadGitaVerse(verseData);
+        await verse.save();
+
+        return res.status(200).json(verseData);
     } catch (error) {
-        console.log(error);
-        return res.status(400).json({
-            errorMessage: "Error in scraping content"
-        });
+        console.error(`Error processing ${baseUrl}:`, error.message);
+        return res.status(400).json({ errorMessage: "Error in scraping content" });
     }
 }
 
-module.exports = apiFunction
+module.exports = apiFunction;

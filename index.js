@@ -1,8 +1,10 @@
 const express = require('express')
+const environment = require('./config/environment')
 const app = express()
 const axios = require('axios');
 const cheerio = require('cheerio');
 const apiFunction  = require('./functions/apiFunction');
+const BhagavadGitaVerse = require('./model/BhagavadGita');
 // const ChapterOne = require("./model/chapter_1")
 
 
@@ -24,6 +26,35 @@ app.get('/api/v1/sb/:canto/:chapter/:verse', async (req, res) => {
     apiFunction(baseUrl, res, "SB");
 })
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log("connected to port 3000")
+app.get("/api/v1/bg/verse/:chapter/:verse", async (req, res) => {
+    try {
+        const { chapter, verse } = req.params;
+        const verseNumber = parseInt(verse);
+        const chapterNumber = parseInt(chapter);
+
+        const verseData = await BhagavadGitaVerse.findOne({
+            chapterNumber,
+            $or: [
+                { verseNumber: verseNumber },
+                { joinedVerseNumbers: verseNumber }
+            ]
+        });
+
+        if (!verseData) {
+            return res.status(404).json({
+                error: `Verse ${verse} from Chapter ${chapter} not found`
+            });
+        }
+
+        res.status(200).json(verseData);
+    } catch (error) {
+        console.error('Error fetching verse:', error);
+        res.status(500).json({
+            error: "Internal server error while fetching verse"
+        });
+    }
+});
+
+app.listen(environment.PORT || process.env.PORT, () => {
+    console.log(`Server running in ${environment.NODE_ENV} mode on port ${environment.PORT}`);
 })
