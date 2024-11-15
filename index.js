@@ -55,6 +55,7 @@ app.get("/api/v1/bg/verse/:chapter/:verse", async (req, res) => {
     }
 });
 
-app.listen(environment.PORT || process.env.PORT, () => {
-    console.log(`Server running in ${environment.NODE_ENV} mode on port ${environment.PORT}`);
-})
+const port = environment.PORT || process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Server running in ${environment.NODE_ENV} mode on port ${port}`);
+});
