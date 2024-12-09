@@ -1,6 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const BhagavadGitaVerse = require('../model/BhagavadGita');
+const SrimadBhagavatam = require('../model/SrimadBhagavatam');
 
 async function apiFunction(baseUrl, res, library, isJoinedVerse = false, joinedVerseNumbers = []) {
     try {
@@ -15,15 +15,28 @@ async function apiFunction(baseUrl, res, library, isJoinedVerse = false, joinedV
         const parentContainer = $('#content');
         
         const titleText = parentContainer.find('h1').text();
-        const [_, chapterStr, verseStr] = titleText.split('.');
-        const chapterNumber = parseInt(chapterStr);
-        const verseNumber = parseInt(verseStr.split('-')[0]); // Get first number for joined verses
+        const matches = titleText.match(/SB (\d+)\.(\d+)\.(\d+)(?:-(\d+))?/);
+
+        if (!matches) {
+            throw new Error(`Unable to parse title: ${titleText}`);
+        }
+
+        const [_, cantoStr, chapterStr, startVerseStr, endVerseStr] = matches;
+        const isActuallyJoined = !!endVerseStr;
+        const startVerse = parseInt(startVerseStr);
+        const endVerse = isActuallyJoined ? parseInt(endVerseStr) : startVerse;
+        
+        // Generate joined verse numbers if needed
+        const actualJoinedNumbers = isActuallyJoined 
+            ? Array.from({ length: endVerse - startVerse + 1 }, (_, i) => startVerse + i)
+            : [startVerse];
 
         const verseData = {
-            chapterNumber,
-            verseNumber,
-            isJoinedVerse,
-            joinedVerseNumbers: isJoinedVerse ? joinedVerseNumbers : [verseNumber],
+            cantoNumber: parseInt(cantoStr),
+            chapterNumber: parseInt(chapterStr),
+            verseNumber: startVerse,
+            isJoinedVerse: isActuallyJoined,
+            joinedVerseNumbers: actualJoinedNumbers,
             sanskritText: parentContainer.find('.r-devanagari').text().trim() || '',
             englishSanskritTranslation: parentContainer.find('.r-verse-text').text().trim() || '',
             synonyms: parentContainer.find('.r-synonyms p').text().trim() || '',
@@ -35,9 +48,22 @@ async function apiFunction(baseUrl, res, library, isJoinedVerse = false, joinedV
                 .join('\n\n')
         };
 
-        // Save to database
-        const verse = new BhagavadGitaVerse(verseData);
-        await verse.save();
+        // Save to database with retry logic
+        let retries = 3;
+        while (retries > 0) {
+            try {
+                const verse = new SrimadBhagavatam(verseData);
+                await verse.save();
+                break;
+            } catch (dbError) {
+                retries--;
+                if (retries === 0) {
+                    console.error(`Failed to save to database after 3 attempts:`, dbError);
+                    throw dbError;
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
 
         return res.status(200).json(verseData);
     } catch (error) {
