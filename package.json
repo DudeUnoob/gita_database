@@ -13,7 +13,8 @@
     "start": "node index.js",
     "build": "echo 'Build completed'",
     "fetch-verses": "cross-env NODE_ENV=development node scripts/fetchAllVerses.js",
-    "fetch-sb": "cross-env NODE_ENV=development node scripts/fetchSrimadBhagavatam.js"
+    "fetch-sb": "cross-env NODE_ENV=development node scripts/fetchSrimadBhagavatam.js",
+    "clear-sb": "cross-env NODE_ENV=development node scripts/clearSrimadBhagavatam.js"
   },
   "devDependencies": {
     "cross-env": "^7.0.3"

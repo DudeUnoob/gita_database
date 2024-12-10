@@ -4,32 +4,34 @@ const SrimadBhagavatam = require('../model/SrimadBhagavatam');
 
 async function apiFunction(baseUrl, res, library, isJoinedVerse = false, joinedVerseNumbers = []) {
     try {
-        const response = await axios.get(baseUrl, {
-            headers: {
-                "Accept": "*/*",
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            }
-        });
-
+        const response = await axios.get(baseUrl);
         const $ = cheerio.load(response.data);
-        const parentContainer = $('#content');
         
-        const titleText = parentContainer.find('h1').text();
-        const matches = titleText.match(/SB (\d+)\.(\d+)\.(\d+)(?:-(\d+))?/);
-
+        // Extract canto, chapter, and verse from the title
+        const titleText = $('.r-title h1').text();
+        
+        // Enhanced regex to detect both single and joined verses
+        // This will match patterns like "ŚB 1.11.16" and "ŚB 1.11.16-17"
+        const matches = titleText.match(/[SŚ]B\s*(\d+)\.(\d+)\.(\d+)(?:-(\d+))?/i);
+        
         if (!matches) {
-            throw new Error(`Unable to parse title: ${titleText}`);
+            throw new Error('Invalid verse format');
         }
 
         const [_, cantoStr, chapterStr, startVerseStr, endVerseStr] = matches;
-        const isActuallyJoined = !!endVerseStr;
         const startVerse = parseInt(startVerseStr);
-        const endVerse = isActuallyJoined ? parseInt(endVerseStr) : startVerse;
+        const endVerse = endVerseStr ? parseInt(endVerseStr) : startVerse;
         
-        // Generate joined verse numbers if needed
+        // Determine if this is actually a joined verse
+        const isActuallyJoined = endVerse > startVerse;
+        
+        // Generate array of verse numbers if joined
         const actualJoinedNumbers = isActuallyJoined 
             ? Array.from({ length: endVerse - startVerse + 1 }, (_, i) => startVerse + i)
             : [startVerse];
+
+        // Get the parent container for the verse content
+        const parentContainer = $('.wrapper-devanagari').parent();
 
         const verseData = {
             cantoNumber: parseInt(cantoStr),
@@ -65,10 +67,13 @@ async function apiFunction(baseUrl, res, library, isJoinedVerse = false, joinedV
             }
         }
 
-        return res.status(200).json(verseData);
+        if (library === "SB") {
+            return res.status(200).json(verseData);
+        }
+
     } catch (error) {
-        console.error(`Error processing ${baseUrl}:`, error.message);
-        return res.status(400).json({ errorMessage: "Error in scraping content" });
+        console.error('Error in apiFunction:', error);
+        throw error;
     }
 }
 
