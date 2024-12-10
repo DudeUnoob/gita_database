@@ -22,13 +22,13 @@ app.get("/api/v1/bg/:chapter/:verse", (req, res) => {
 
 })
 */
-
+/*
 app.get('/api/v1/sb/:canto/:chapter/:verse', async (req, res) => {
     const baseUrl = `https://vedabase.io/en/library/sb/${req.params.canto}/${req.params.chapter}/${req.params.verse}/`;
     apiFunction(baseUrl, res, "SB");
-})
+})*/
 
-app.get("/api/v1/bg/verse/:chapter/:verse", async (req, res) => {
+app.get("/api/v1/bg/:chapter/:verse", async (req, res) => {
     try {
         const { chapter, verse } = req.params;
         const verseNumber = parseInt(verse);
@@ -57,7 +57,7 @@ app.get("/api/v1/bg/verse/:chapter/:verse", async (req, res) => {
     }
 });
 
-app.get("/api/v1/sb/verse/:canto/:chapter/:verse", async (req, res) => {
+app.get("/api/v1/sb/:canto/:chapter/:verse", async (req, res) => {
     try {
         const { canto, chapter, verse } = req.params;
         const verseNumber = parseInt(verse);
